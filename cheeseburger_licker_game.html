@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cheeseburger Licker: The Fry Ascension</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        burger: {
+                            bun: '#e07a5f',
+                            cheese: '#f4a261',
+                            patty: '#5c3d2e',
+                            lettuce: '#2a9d8f',
+                            bg: '#120f1d',
+                            card: '#1d1931',
+                            border: '#322b50',
+                            accent: '#ff0055',
+                            gold: '#ffb703',
+                            fry: '#ffc300'
+                        }
+                    },
+                    boxShadow: {
+                        'neon-pink': '0 0 20px rgba(255, 0, 85, 0.5)',
+                        'neon-gold': '0 0 25px rgba(255, 183, 3, 0.6)',
+                        'glow-btn': '0 0 15px rgba(244, 162, 97, 0.4)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f0c1b;
+            color: #f3f4f6;
+            font-family: 'Fredoka', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #171326;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #322b50;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff0055;
+        }
+
+        /* Target Squish Dynamic Animations */
+        .target-clickable {
+            cursor: pointer;
+            transition: transform 0.08s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            touch-action: manipulation;
+        }
+
+        .target-clickable:hover {
+            transform: scale(1.03);
+        }
+
+        .target-clickable:active, .squish-active {
+            transform: scale(0.88, 1.12) !important;
+        }
+
+        /* Neon Glow & Pulse Keyframes */
+        @keyframes pulse-gold {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 183, 3, 0.5), 0 0 30px rgba(255, 183, 3, 0.2); transform: scale(1); }
+            50% { box-shadow: 0 0 30px rgba(255, 183, 3, 0.9), 0 0 50px rgba(255, 183, 3, 0.5); transform: scale(1.02); }
+        }
+
+        .ascend-ready {
+            animation: pulse-gold 1.8s infinite ease-in-out;
+        }
+
+        /* Tongue Overlay Animation */
+        .tongue-anim {
+            position: absolute;
+            pointer-events: none;
+            transform-origin: bottom center;
+            transition: transform 0.15s ease-out, opacity 0.2s ease-out;
+            opacity: 0;
+            z-index: 25;
+        }
+
+        .tongue-anim.licking {
+            opacity: 1;
+            animation: lickSweep 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes lickSweep {
+            0% { transform: translateY(60px) scaleY(0.3) scaleX(0.7) rotate(-10deg); opacity: 0; }
+            50% { transform: translateY(-10px) scaleY(1.2) scaleX(1.1) rotate(5deg); opacity: 1; }
+            100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 0; }
+        }
+
+        /* Toast Popup */
+        .toast-notification {
+            animation: slideIn 0.3s ease-out forwards, fadeOut 0.5s ease-in 2.5s forwards;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(100%) scale(0.9); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-burger-accent selection:text-white">
+
+    <!-- Top Header Navigation / Stats Bar -->
+    <header class="w-full bg-burger-card/90 backdrop-blur-md border-b border-burger-border sticky top-0 z-40 px-4 py-3 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-3">
+            <!-- Game Title & Mode -->
+            <div class="flex items-center space-x-3">
+                <span class="text-3xl" id="headerIcon">🍔</span>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500">
+                        CHEESEBURGER LICKER
+                    </h1>
+                    <p class="text-xs text-gray-400 font-outfit" id="subtitleText">The Quest for the Ultimate Lick</p>
+                </div>
+            </div>
+
+            <!-- Currency & Rate Displays -->
+            <div class="flex items-center space-x-4 md:space-x-8 bg-burger-bg/80 px-4 py-2 rounded-2xl border border-burger-border">
+                <!-- Golden Salt (Prestige Currency) -->
+                <div class="text-center hidden sm:block" id="goldenSaltHeader">
+                    <span class="text-xs uppercase tracking-wider text-yellow-400 font-bold block">Golden Salt</span>
+                    <span class="text-lg font-black text-yellow-300" id="saltDisplay">0 🧂</span>
+                </div>
+                <!-- LPS -->
+                <div class="text-center">
+                    <span class="text-xs uppercase tracking-wider text-gray-400 font-bold block">Licks / Sec</span>
+                    <span class="text-lg md:text-xl font-bold text-burger-cheese" id="lpsDisplay">0</span>
+                </div>
+                <!-- Total Current Licks -->
+                <div class="text-center border-l border-burger-border pl-4">
+                    <span class="text-xs uppercase tracking-wider text-gray-400 font-bold block">Total Licks</span>
+                    <span class="text-2xl md:text-3xl font-black text-white" id="licksDisplay">0</span>
+                </div>
+            </div>
+
+            <!-- Header Controls (Sound, Reset, Settings) -->
+            <div class="flex items-center space-x-2">
+                <button id="soundToggleBtn" onclick="AudioSys.toggleSound()" class="p-2.5 rounded-xl bg-burger-border hover:bg-burger-border/80 text-yellow-400 transition-colors" title="Toggle Sound">
+                    🔊
+                </button>
+                <button onclick="switchTab('settings')" class="p-2.5 rounded-xl bg-burger-border hover:bg-burger-border/80 text-gray-200 transition-colors" title="Settings & Save">
+                    ⚙️
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow items-start">
+
+        <!-- LEFT COLUMN: Interactive Target Area (Licker Stage) -->
+        <section class="lg:col-span-5 flex flex-col items-center justify-center bg-burger-card border border-burger-border rounded-3xl p-6 relative overflow-hidden shadow-2xl min-h-[480px] lg:min-h-[600px]">
+            
+            <!-- Canvas for Floating Effects & Particles -->
+            <canvas id="particleCanvas" class="absolute inset-0 pointer-events-none z-10 w-full h-full"></canvas>
+
+            <!-- Mode Swap Badge / Indicator -->
+            <div class="absolute top-4 left-4 z-20 flex items-center space-x-2">
+                <span id="targetModeBadge" class="px-3 py-1 text-xs font-extrabold uppercase rounded-full bg-burger-accent/20 text-burger-accent border border-burger-accent/40">
+                    Cheeseburger Mode
+                </span>
+                <button id="swapTargetBtn" onclick="toggleTargetMode()" class="hidden px-2 py-1 text-xs font-bold rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 hover:bg-yellow-500/40">
+                    🔄 Swap Target
+                </button>
+            </div>
+
+            <!-- Click Power Indicator -->
+            <div class="absolute top-4 right-4 z-20 text-right">
+                <span class="text-xs text-gray-400 block font-outfit">Click Power</span>
+                <span id="clickPowerDisplay" class="text-lg font-black text-yellow-400">+1 / Lick</span>
+            </div>
+
+            <!-- Central Interactive Target Container -->
+            <div class="relative my-auto flex flex-col items-center justify-center w-full">
+
+                <!-- Interactive Tongue Animation Visual Overlay -->
+                <div id="tongueOverlay" class="tongue-anim w-28 h-36">
+                    <svg viewBox="0 0 100 130" class="w-full h-full filter drop-shadow-md">
+                        <path d="M 20 130 C 10 70, 10 30, 50 10 C 90 30, 90 70, 80 130 Z" fill="#ff4d6d" />
+                        <path d="M 50 20 L 50 90" stroke="#ff758f" stroke-width="4" stroke-linecap="round" />
+                        <ellipse cx="50" cy="35" rx="20" ry="10" fill="#ff758f" opacity="0.4" />
+                    </svg>
+                </div>
+
+                <!-- Giant Interactive Cheeseburger SVG -->
+                <div id="burgerTarget" class="target-clickable relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center select-none">
+                    <svg id="burgerSVG" viewBox="0 0 300 300" class="w-full h-full filter drop-shadow-2xl">
+                        <!-- Bun Top -->
+                        <path d="M 40 150 C 40 60, 260 60, 260 150 Z" fill="#e07a5f" />
+                        <path d="M 50 145 C 60 80, 240 80, 250 145 Z" fill="#f4a261" opacity="0.3" />
+                        <!-- Sesame Seeds -->
+                        <g fill="#fefae0">
+                            <ellipse cx="90" cy="95" rx="5" ry="2" transform="rotate(-15 90 95)" />
+                            <ellipse cx="130" cy="75" rx="5" ry="2" transform="rotate(10 130 75)" />
+                            <ellipse cx="170" cy="80" rx="5" ry="2" transform="rotate(-5 170 80)" />
+                            <ellipse cx="210" cy="100" rx="5" ry="2" transform="rotate(20 210 100)" />
+                            <ellipse cx="110" cy="120" rx="5" ry="2" transform="rotate(5 110 120)" />
+                            <ellipse cx="180" cy="115" rx="5" ry="2" transform="rotate(-15 180 115)" />
+                        </g>
+                        <!-- Lettuce Layer -->
+                        <path d="M 30 150 Q 50 170, 70 150 Q 90 170, 110 150 Q 130 170, 150 150 Q 170 170, 190 150 Q 210 170, 230 150 Q 250 170, 270 150 L 265 160 Q 245 180, 225 160 Q 205 180, 185 160 Q 165 180, 145 160 Q 125 180, 105 160 Q 85 180, 65 160 Q 45 180, 35 160 Z" fill="#2a9d8f" />
+                        <!-- Melted Cheese Layer -->
+                        <polygon points="35,160 265,160 250,190 220,170 180,205 140,170 100,200 60,170 40,185" fill="#ffb703" />
+                        <!-- Burger Patty -->
+                        <rect x="35" y="180" width="230" height="35" rx="12" fill="#5c3d2e" />
+                        <rect x="40" y="185" width="220" height="8" rx="4" fill="#432818" opacity="0.6" />
+                        <!-- Bun Bottom -->
+                        <path d="M 45 215 L 255 215 C 255 245, 45 245, 45 215 Z" fill="#e07a5f" />
+                        <rect x="45" y="215" width="210" height="8" fill="#f4a261" opacity="0.4" />
+                    </svg>
+
+                    <!-- Giant French Fry SVG Target (Hidden initially until unlocked/swapped) -->
+                    <svg id="frySVG" viewBox="0 0 300 300" class="w-full h-full filter drop-shadow-2xl hidden">
+                        <!-- Fry Red Container Box -->
+                        <path d="M 60 120 L 240 120 L 210 270 L 90 270 Z" fill="#e63946" />
+                        <path d="M 60 120 Q 150 150 240 120 L 210 270 Q 150 280 90 270 Z" fill="#d62828" opacity="0.3" />
+                        <!-- Logo Emblem on Box -->
+                        <circle cx="150" cy="195" r="30" fill="#ffb703" />
+                        <text x="150" y="205" font-size="28" text-anchor="middle" font-weight="900" fill="#d62828">🍟</text>
+                        <!-- Golden Fries Sticking Out -->
+                        <!-- Fry 1 -->
+                        <rect x="80" y="40" width="22" height="110" rx="5" fill="#ffc300" transform="rotate(-15 80 40)" />
+                        <!-- Fry 2 -->
+                        <rect x="110" y="25" width="24" height="125" rx="5" fill="#ffb703" transform="rotate(-5 110 25)" />
+                        <!-- Fry 3 (Center High) -->
+                        <rect x="142" y="15" width="25" height="135" rx="5" fill="#ffd166" />
+                        <!-- Fry 4 -->
+                        <rect x="175" y="30" width="22" height="120" rx="5" fill="#ffc300" transform="rotate(8 175 30)" />
+                        <!-- Fry 5 -->
+                        <rect x="200" y="50" width="22" height="100" rx="5" fill="#ffb703" transform="rotate(18 200 50)" />
+                        <!-- Salt Specks -->
+                        <circle cx="150" cy="50" r="3" fill="#ffffff" />
+                        <circle cx="120" cy="70" r="2.5" fill="#ffffff" />
+                        <circle cx="180" cy="65" r="3" fill="#ffffff" />
+                        <circle cx="95" cy="80" r="2" fill="#ffffff" />
+                    </svg>
+                </div>
+
+            </div>
+
+            <!-- Ascension Teaser Banner / Shortcut -->
+            <div id="ascensionBanner" class="w-full mt-4 bg-gradient-to-r from-yellow-600/30 via-amber-500/20 to-yellow-600/30 border border-yellow-500/40 rounded-2xl p-3 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-2xl">✨</span>
+                    <div>
+                        <h4 class="text-xs uppercase font-extrabold text-yellow-400">Fry Ascension Progress</h4>
+                        <p id="ascendProgressText" class="text-xs text-gray-300 font-outfit">0 / 1.00 Billion Licks</p>
+                    </div>
+                </div>
+                <button id="quickAscendBtn" onclick="switchTab('ascension')" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-black rounded-xl text-xs transition-all shadow-md">
+                    VIEW
+                </button>
+            </div>
+
+        </section>
+
+        <!-- RIGHT COLUMN: Upgrades, Automation, Ascension & Controls -->
+        <section class="lg:col-span-7 bg-burger-card border border-burger-border rounded-3xl flex flex-col h-[650px] shadow-2xl overflow-hidden">
+            
+            <!-- Tab Navigation Bar -->
+            <nav class="flex border-b border-burger-border bg-burger-bg/60 p-2 gap-1 overflow-x-auto">
+                <button onclick="switchTab('tongues')" id="tab-tongues" class="tab-btn flex-1 min-w-[90px] py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center space-x-1.5 transition-all bg-burger-accent text-white shadow-md">
+                    <span>👅</span>
+                    <span>Tongues</span>
+                </button>
+                <button onclick="switchTab('lickers')" id="tab-lickers" class="tab-btn flex-1 min-w-[90px] py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center space-x-1.5 transition-all text-gray-400 hover:text-white hover:bg-burger-border/50">
+                    <span>🤖</span>
+                    <span>Lickers</span>
+                </button>
+                <button onclick="switchTab('toppings')" id="tab-toppings" class="tab-btn flex-1 min-w-[90px] py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center space-x-1.5 transition-all text-gray-400 hover:text-white hover:bg-burger-border/50">
+                    <span>🧀</span>
+                    <span>Flavors</span>
+                </button>
+                <button onclick="switchTab('ascension')" id="tab-ascension" class="tab-btn flex-1 min-w-[90px] py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center space-x-1.5 transition-all text-yellow-400 hover:bg-yellow-500/10 border border-yellow-500/30">
+                    <span>🍟</span>
+                    <span>Ascend</span>
+                </button>
+                <button onclick="switchTab('achievements')" id="tab-achievements" class="tab-btn flex-1 min-w-[90px] py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center space-x-1.5 transition-all text-gray-400 hover:text-white hover:bg-burger-border/50">
+                    <span>🏆</span>
+                    <span>Badges</span>
+                </button>
+            </nav>
+
+            <!-- TAB CONTENT CONTAINER -->
+            <div class="flex-grow overflow-y-auto p-4 md:p-6 space-y-4" id="tabContent">
+
+                <!-- 👅 TONGUE UPGRADES TAB (Click Power) -->
+                <div id="content-tongues" class="tab-pane space-y-3">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <h3 class="font-extrabold text-lg text-white">Tongue Modifications</h3>
+                            <p class="text-xs text-gray-400">Upgrade your tongue strength to lick more per click!</p>
+                        </div>
+                    </div>
+                    <div id="tongueUpgradesList" class="space-y-3">
+                        <!-- Dynamic Upgrade Cards Render Here -->
+                    </div>
+                </div>
+
+                <!-- 🤖 AUTOMATION TAB (LPS Passive Lickers) -->
+                <div id="content-lickers" class="tab-pane hidden space-y-3">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <h3 class="font-extrabold text-lg text-white">Automated Lickers</h3>
+                            <p class="text-xs text-gray-400">Hire automated lickers to generate continuous passive licks!</p>
+                        </div>
+                    </div>
+                    <div id="lickersList" class="space-y-3">
+                        <!-- Dynamic Licker Cards Render Here -->
+                    </div>
+                </div>
+
+                <!-- 🧀 FLAVORS & TOPPINGS TAB (Multipliers) -->
+                <div id="content-toppings" class="tab-pane hidden space-y-3">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <h3 class="font-extrabold text-lg text-white">Flavor & Topping Boosters</h3>
+                            <p class="text-xs text-gray-400">Delicious condiments that multiply all global lick output!</p>
+                        </div>
+                    </div>
+                    <div id="toppingsList" class="space-y-3">
+                        <!-- Dynamic Toppings Render Here -->
+                    </div>
+                </div>
+
+                <!-- 🍟 ASCENSION TAB ("The Fry Dimension") -->
+                <div id="content-ascension" class="tab-pane hidden space-y-6">
+                    <div class="text-center bg-gradient-to-b from-yellow-500/10 to-transparent p-6 rounded-2xl border border-yellow-500/30">
+                        <span class="text-5xl mb-2 block">🍟✨</span>
+                        <h3 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500">THE FRY ASCENSION</h3>
+                        <p class="text-sm text-gray-300 max-w-md mx-auto mt-2 font-outfit">
+                            Reach <strong class="text-yellow-400">1,000,000,000 (1 Billion) Licks</strong> to transcend the cheeseburger reality and enter the Golden Fry Dimension. Earn <strong>Golden Salt</strong> to unlock permanent divine powers!
+                        </p>
+
+                        <!-- Ascension Button -->
+                        <div class="mt-6">
+                            <button id="mainAscendBtn" onclick="performAscension()" disabled class="w-full py-4 px-6 rounded-2xl font-black text-lg transition-all duration-300 bg-gray-700 text-gray-500 cursor-not-allowed uppercase tracking-wider shadow-lg">
+                                Lick 1B Times To Ascend
+                            </button>
+                            <p id="ascendBonusPreview" class="text-xs text-yellow-400 mt-2 font-bold">Current Reward: +0 Golden Salt 🧂</p>
+                        </div>
+                    </div>
+
+                    <!-- Golden Salt Perks Tree -->
+                    <div>
+                        <h4 class="font-black text-md text-yellow-400 uppercase tracking-wider mb-3 flex items-center space-x-2">
+                            <span>🧂</span>
+                            <span>Golden Salt Perks Tree</span>
+                        </h4>
+                        <div id="ascensionPerksList" class="space-y-3">
+                            <!-- Perks Render Here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🏆 BADGES / ACHIEVEMENTS TAB -->
+                <div id="content-achievements" class="tab-pane hidden space-y-3">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <h3 class="font-extrabold text-lg text-white">Licking Milestones</h3>
+                            <p class="text-xs text-gray-400">Unlock tasty achievements as your lick legacy grows.</p>
+                        </div>
+                    </div>
+                    <div id="achievementsList" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- Dynamic Badges Render Here -->
+                    </div>
+                </div>
+
+                <!-- ⚙️ SETTINGS & STATS TAB -->
+                <div id="content-settings" class="tab-pane hidden space-y-6">
+                    <!-- Stats Section -->
+                    <div class="bg-burger-bg/80 border border-burger-border p-4 rounded-2xl space-y-3">
+                        <h4 class="font-extrabold text-md text-burger-cheese">📊 Lick Statistics</h4>
+                        <div class="grid grid-cols-2 gap-3 text-xs font-outfit">
+                            <div class="bg-burger-card p-3 rounded-xl border border-burger-border">
+                                <span class="text-gray-400 block">Total Lifetime Licks</span>
+                                <span id="statTotalLicks" class="text-base font-bold text-white">0</span>
+                            </div>
+                            <div class="bg-burger-card p-3 rounded-xl border border-burger-border">
+                                <span class="text-gray-400 block">Total Ascensions</span>
+                                <span id="statAscensions" class="text-base font-bold text-yellow-400">0</span>
+                            </div>
+                            <div class="bg-burger-card p-3 rounded-xl border border-burger-border">
+                                <span class="text-gray-400 block">Highest LPS</span>
+                                <span id="statMaxLPS" class="text-base font-bold text-white">0</span>
+                            </div>
+                            <div class="bg-burger-card p-3 rounded-xl border border-burger-border">
+                                <span class="text-gray-400 block">Total Manual Clicks</span>
+                                <span id="statClicks" class="text-base font-bold text-white">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Save Management -->
+                    <div class="bg-burger-bg/80 border border-burger-border p-4 rounded-2xl space-y-3">
+                        <h4 class="font-extrabold text-md text-burger-accent">💾 Save & Data Management</h4>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="saveGame(true)" class="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-xl text-xs transition-colors">
+                                Save Game
+                            </button>
+                            <button onclick="exportSave()" class="flex-1 py-2.5 px-4 bg-burger-border hover:bg-burger-border/80 font-bold rounded-xl text-xs transition-colors">
+                                Export Save
+                            </button>
+                            <button onclick="importSavePrompt()" class="flex-1 py-2.5 px-4 bg-burger-border hover:bg-burger-border/80 font-bold rounded-xl text-xs transition-colors">
+                                Import Save
+                            </button>
+                        </div>
+                        <button onclick="confirmReset()" class="w-full py-2.5 px-4 bg-red-900/40 hover:bg-red-800/60 border border-red-500/30 text-red-300 font-bold rounded-xl text-xs transition-colors mt-2">
+                            ⚠️ Wipe All Save Data
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer Banner -->
+    <footer class="w-full py-3 text-center text-xs text-gray-500 border-t border-burger-border bg-burger-card/50">
+        Cheeseburger Licker: The Fry Ascension &bull; Lick responsibly!
+    </footer>
+
+    <!-- Custom Modal Container for Dialogs / Import / Wipe -->
+    <div id="customModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-burger-card border border-burger-border rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <h3 id="modalTitle" class="text-xl font-black text-white">Title</h3>
+            <p id="modalBody" class="text-sm text-gray-300 font-outfit">Body message goes here.</p>
+            <textarea id="modalInput" class="w-full h-24 bg-burger-bg border border-burger-border rounded-xl p-3 text-xs text-gray-200 font-mono hidden resize-none" placeholder="Paste save code here..."></textarea>
+            <div class="flex justify-end space-x-3 pt-2" id="modalButtons">
+                <button onclick="closeModal()" class="px-4 py-2 rounded-xl bg-burger-border text-gray-300 font-bold text-xs">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- MAIN GAME SCRIPT -->
+    <script>
+        /* ==========================================================================
+           1. WEB AUDIO API SYNTHESIZER
+           ========================================================================== */
+        const AudioSys = {
+            ctx: null,
+            muted: false,
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+
+            toggleSound() {
+                this.muted = !this.muted;
+                const btn = document.getElementById('soundToggleBtn');
+                btn.innerHTML = this.muted ? '🔇' : '🔊';
+                showToast(this.muted ? 'Sound Muted' : 'Sound Enabled');
+            },
+
+            playLick() {
+                if (this.muted) return;
+                this.init();
+                
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                // Wet squish frequency sweep
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(320 + Math.random() * 80, now);
+                osc.frequency.exponentialRampToValueAtTime(120, now + 0.08);
+
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.08);
+            },
+
+            playBuy() {
+                if (this.muted) return;
+                this.init();
+
+                const now = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+
+                    gain.gain.setValueAtTime(0.15, now + idx * 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.12);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now + idx * 0.05);
+                    osc.stop(now + idx * 0.05 + 0.12);
+                });
+            },
+
+            playCrit() {
+                if (this.muted) return;
+                this.init();
+
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.12);
+
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.12);
+            },
+
+            playAscend() {
+                if (this.muted) return;
+                this.init();
+
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(1600, now + 1.2);
+
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 1.2);
+            }
+        };
+
+        /* ==========================================================================
+           2. GAME DATA DEFINITIONS
+           ========================================================================== */
+        const TONGUE_UPGRADES = [
+            { id: 't1', name: 'Sandpaper Tongue', cost: 15, basePower: 1, icon: '👅', desc: 'Adds rough texture for +1 lick per click.' },
+            { id: 't2', name: 'Rough Cat Tongue', cost: 100, basePower: 5, icon: '🐱', desc: 'Microscopic papillae grab +5 extra licks.' },
+            { id: 't3', name: 'Reptile Fork Tongue', cost: 1100, basePower: 25, icon: '🐍', desc: 'Double tip means double the lick coverage (+25).' },
+            { id: 't4', name: 'Electric Sonic Tongue', cost: 12000, basePower: 120, icon: '⚡', desc: 'Vibrates at 500 Hz for high-frequency licking (+120).' },
+            { id: 't5', name: 'Diamond Encrusted Tongue', cost: 130000, basePower: 800, icon: '💎', desc: 'Unbreakable diamond sheen adds +800 power.' },
+            { id: 't6', name: 'Cosmic Slime Tongue', cost: 1500000, basePower: 5000, icon: '🌌', desc: 'Transdimensional slime extracts +5,000 licks.' },
+            { id: 't7', name: 'Quantum Multi-Tongue', cost: 20000000, basePower: 40000, icon: '⚛️', desc: 'Exists in 10 parallel dimensions at once (+40,000).' }
+        ];
+
+        const AUTOMATION_LICKERS = [
+            { id: 'l1', name: 'Saliva Dripper', cost: 15, baseLPS: 0.5, icon: '💧', desc: 'Drips steadily to generate soft passive licks.' },
+            { id: 'l2', name: 'Licking Seagull', cost: 100, baseLPS: 4, icon: '🐦', desc: 'A relentless bird obsessed with burger sesame seeds.' },
+            { id: 'l3', name: 'Hungry Toddler', cost: 1100, baseLPS: 32, icon: '👶', desc: 'Sticky fingers and rapid licking action.' },
+            { id: 'l4', name: 'Robo-Tongue 3000', cost: 12000, baseLPS: 260, icon: '🤖', desc: 'Pneumatic piston-driven stainless steel tongue.' },
+            { id: 'l5', name: 'Burger Cultist Circle', cost: 130000, baseLPS: 1400, icon: '🧙‍♂️', desc: 'Chants mystical spells that chant-lick the patty.' },
+            { id: 'l6', name: 'Lick-O-Matic Industrial', cost: 1400000, baseLPS: 7800, icon: '🏭', desc: 'Massive assembly factory dedicated to continuous licking.' },
+            { id: 'l7', name: 'Orbital Laser Licker', cost: 20000000, baseLPS: 44000, icon: '🛰️', desc: 'Concentrated plasma beam licks from low-Earth orbit.' },
+            { id: 'l8', name: 'Dimensional Wormhole', cost: 300000000, baseLPS: 260000, icon: '🌀', desc: 'Siphons infinite licks from the multiverse.' }
+        ];
+
+        const TOPPING_BOOSTERS = [
+            { id: 'b1', name: 'Extra Pickle Juice', cost: 500, multiplier: 0.10, icon: '🥒', desc: 'Tangy zest boosts global LPS by +10%.' },
+            { id: 'b2', name: 'Spicy Jalapeño Heat', cost: 5000, multiplier: 0.15, icon: '🌶️', desc: 'Hot spice kicks global LPS up by +15%.' },
+            { id: 'b3', name: 'Melted Cheddar Deluge', cost: 50000, multiplier: 0.25, icon: '🧀', desc: 'Gooey cheese overflow multiplies LPS by +25%.' },
+            { id: 'b4', name: 'Truffle Mayo Shine', cost: 500000, multiplier: 0.50, icon: '🍾', desc: 'Gourmet gloss adds +50% total global output.' },
+            { id: 'b5', name: 'Secret Diner Formula', cost: 10000000, multiplier: 1.00, icon: '🧪', desc: 'Top secret recipe doubles total global output (+100%).' }
+        ];
+
+        const ASCENSION_PERKS = [
+            { id: 'p1', name: 'Extra Salty', cost: 1, icon: '🧂', desc: 'Each Golden Salt increases global output by +10% permanently.' },
+            { id: 'p2', name: 'Crispy Crunch', cost: 2, icon: '💥', desc: 'Grants a 10% chance to score a 10x CRITICAL LICK on clicks.' },
+            { id: 'p3', name: 'Ketchup Dip', cost: 5, icon: '🥫', desc: 'Boosts all automated licker output by an extra +50%.' },
+            { id: 'p4', name: 'Curly Fry Twist', cost: 10, icon: '🌀', desc: 'Unlocks Curly Fry power, doubling base click power!' },
+            { id: 'p5', name: 'Loaded Fry Madness', cost: 25, icon: '🧀', desc: 'Triple all passive LPS generation forever!' }
+        ];
+
+        const ACHIEVEMENTS = [
+            { id: 'a1', name: 'First Taste', reqLicks: 1, icon: '👅', desc: 'Lick a cheeseburger for the very first time.' },
+            { id: 'a2', name: 'Sesame Snatcher', reqLicks: 100, icon: '🌱', desc: 'Reach 100 total licks.' },
+            { id: 'a3', name: 'Cheese Connoisseur', reqLicks: 10000, icon: '🧀', desc: 'Reach 10,000 total licks.' },
+            { id: 'a4', name: 'Lick Millionaire', reqLicks: 1000000, icon: '💰', desc: 'Reach 1,000,000 total licks.' },
+            { id: 'a5', name: 'The Billionaire Lick', reqLicks: 1000000000, icon: '👑', desc: 'Reach 1 Billion Licks and qualify for Ascension!' },
+            { id: 'a6', name: 'Golden Transcendent', reqAscensions: 1, icon: '🍟', desc: 'Ascend to the Golden Fry Dimension for the first time.' }
+        ];
+
+        /* ==========================================================================
+           3. GAME STATE & DEFAULT LOAD
+           ========================================================================== */
+        let state = {
+            licks: 0,
+            totalLicks: 0,
+            clicks: 0,
+            goldenSalt: 0,
+            ascensions: 0,
+            maxLPS: 0,
+            targetMode: 'burger', // 'burger' or 'fry'
+            fryUnlocked: false,
+            lastTime: Date.now(),
+            
+            // Purchased counts/levels
+            tongues: {},
+            lickers: {},
+            toppings: {},
+            perks: {},
+            unlockedAchievements: []
+        };
+
+        /* ==========================================================================
+           4. CORE MATH & COMPUTED STATS
+           ========================================================================== */
+        function getClickPower() {
+            let base = 1;
+            TONGUE_UPGRADES.forEach(u => {
+                const count = state.tongues[u.id] || 0;
+                base += u.basePower * count;
+            });
+
+            // Perk bonus: Curly Fry Twist
+            if (state.perks['p4']) base *= 2;
+
+            // Global Salt bonus
+            const saltBonus = 1 + (state.goldenSalt * 0.10 * (state.perks['p1'] ? 1 : 0));
+            return Math.floor(base * saltBonus);
+        }
+
+        function getLPS() {
+            let baseLPS = 0;
+            AUTOMATION_LICKERS.forEach(l => {
+                const count = state.lickers[l.id] || 0;
+                baseLPS += l.baseLPS * count;
+            });
+
+            // Perk bonus: Ketchup Dip
+            if (state.perks['p3']) baseLPS *= 1.5;
+            if (state.perks['p5']) baseLPS *= 3.0;
+
+            // Multipliers from toppings
+            let toppingMult = 1.0;
+            TOPPING_BOOSTERS.forEach(b => {
+                if (state.toppings[b.id]) toppingMult += b.multiplier;
+            });
+
+            // Global Salt bonus
+            const saltBonus = 1 + (state.goldenSalt * 0.10 * (state.perks['p1'] ? 1 : 0));
+
+            const total = baseLPS * toppingMult * saltBonus;
+            if (total > state.maxLPS) state.maxLPS = total;
+            return total;
+        }
+
+        function getItemCost(baseCost, count) {
+            return Math.floor(baseCost * Math.pow(1.15, count));
+        }
+
+        function calculateAscensionReward() {
+            if (state.totalLicks < 1000000000) return 0;
+            return Math.floor(Math.cbrt(state.licks / 1e9) * 10);
+        }
+
+        function formatNum(num) {
+            if (num < 1000) return Math.floor(num).toLocaleString();
+            const suffixes = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc'];
+            const i = Math.floor(Math.log10(num) / 3);
+            if (i >= suffixes.length) return num.toExponential(2);
+            const formatted = (num / Math.pow(10, i * 3)).toFixed(2);
+            return `${formatted} ${suffixes[i]}`;
+        }
+
+        /* ==========================================================================
+           5. CANVAS & PARTICLE EFFECTS
+           ========================================================================== */
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let floatingTexts = [];
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        setTimeout(resizeCanvas, 100);
+
+        class Particle {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type; // 'seed', 'cheese', 'salt', 'sparkle'
+                this.vx = (Math.random() - 0.5) * 6;
+                this.vy = (Math.random() - 0.8) * 8;
+                this.gravity = 0.25;
+                this.alpha = 1;
+                this.size = Math.random() * 6 + 4;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.vRot = (Math.random() - 0.5) * 0.2;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.rotation += this.vRot;
+                this.alpha -= 0.02;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                if (this.type === 'seed') {
+                    ctx.fillStyle = '#fefae0';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, this.size, this.size / 2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 'cheese') {
+                    ctx.fillStyle = '#ffb703';
+                    ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                } else if (this.type === 'salt') {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(-2, -2, 4, 4);
+                } else { // sparkle
+                    ctx.fillStyle = '#00f5d4';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        class FloatingText {
+            constructor(x, y, text, isCrit = false) {
+                this.x = x;
+                this.y = y;
+                this.text = text;
+                this.isCrit = isCrit;
+                this.vy = -2.5;
+                this.alpha = 1;
+                this.scale = isCrit ? 1.5 : 1;
+            }
+
+            update() {
+                this.y += this.vy;
+                this.alpha -= 0.02;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.font = `900 ${this.isCrit ? '24px' : '18px'} Fredoka, sans-serif`;
+                ctx.fillStyle = this.isCrit ? '#ff0055' : '#ffc300';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 3;
+                ctx.strokeText(this.text, this.x, this.y);
+                ctx.fillText(this.text, this.x, this.y);
+                ctx.restore();
+            }
+        }
+
+        function spawnClickEffects(e, licksGained, isCrit) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Floating Numbers
+            const text = isCrit ? `⚡ CRIT +${formatNum(licksGained)}!` : `+${formatNum(licksGained)}`;
+            floatingTexts.push(new FloatingText(x + (Math.random() - 0.5) * 20, y, text, isCrit));
+
+            // Particles
+            const particleType = state.targetMode === 'fry' ? 'salt' : (Math.random() > 0.5 ? 'seed' : 'cheese');
+            const count = isCrit ? 15 : 6;
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, particleType));
+            }
+        }
+
+        function renderCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update & Draw Particles
+            particles = particles.filter(p => p.alpha > 0);
+            particles.forEach(p => {
+                p.update();
+                p.draw(ctx);
+            });
+
+            // Update & Draw Floating Texts
+            floatingTexts = floatingTexts.filter(ft => ft.alpha > 0);
+            floatingTexts.forEach(ft => {
+                ft.update();
+                ft.draw(ctx);
+            });
+
+            requestAnimationFrame(renderCanvas);
+        }
+        requestAnimationFrame(renderCanvas);
+
+        /* ==========================================================================
+           6. INTERACTIVE TARGET CLICK HANDLER
+           ========================================================================== */
+        const burgerTarget = document.getElementById('burgerTarget');
+        const tongueOverlay = document.getElementById('tongueOverlay');
+
+        function triggerTargetLick(e) {
+            AudioSys.init();
+
+            // Calculate gain
+            let clickVal = getClickPower();
+            let isCrit = false;
+
+            // Crit check perk
+            if (state.perks['p2'] && Math.random() < 0.10) {
+                clickVal *= 10;
+                isCrit = true;
+                AudioSys.playCrit();
+            } else {
+                AudioSys.playLick();
+            }
+
+            state.licks += clickVal;
+            state.totalLicks += clickVal;
+            state.clicks++;
+
+            // Visual Target Squish animation
+            burgerTarget.classList.remove('squish-active');
+            void burgerTarget.offsetWidth; // trigger reflow
+            burgerTarget.classList.add('squish-active');
+
+            // Trigger Tongue Visual
+            tongueOverlay.classList.remove('licking');
+            void tongueOverlay.offsetWidth;
+            tongueOverlay.classList.add('licking');
+
+            // Spawn Particles & Floating Text
+            spawnClickEffects(e, clickVal, isCrit);
+
+            // Check Achievements & UI
+            checkAchievements();
+            updateUI();
+        }
+
+        burgerTarget.addEventListener('mousedown', triggerTargetLick);
+        burgerTarget.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            triggerTargetLick(touch);
+        });
+
+        /* ==========================================================================
+           7. TARGET MODE TOGGLE (BURGER vs FRY)
+           ========================================================================== */
+        function toggleTargetMode() {
+            if (!state.fryUnlocked) return;
+            state.targetMode = state.targetMode === 'burger' ? 'fry' : 'burger';
+            updateTargetGraphics();
+            showToast(`Switched to ${state.targetMode.toUpperCase()} Mode!`);
+        }
+
+        function updateTargetGraphics() {
+            const burgerSVG = document.getElementById('burgerSVG');
+            const frySVG = document.getElementById('frySVG');
+            const badge = document.getElementById('targetModeBadge');
+            const headerIcon = document.getElementById('headerIcon');
+
+            if (state.targetMode === 'fry') {
+                burgerSVG.classList.add('hidden');
+                frySVG.classList.remove('hidden');
+                badge.innerText = 'French Fry Mode';
+                badge.className = 'px-3 py-1 text-xs font-extrabold uppercase rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/40';
+                headerIcon.innerText = '🍟';
+            } else {
+                frySVG.classList.add('hidden');
+                burgerSVG.classList.remove('hidden');
+                badge.innerText = 'Cheeseburger Mode';
+                badge.className = 'px-3 py-1 text-xs font-extrabold uppercase rounded-full bg-burger-accent/20 text-burger-accent border border-burger-accent/40';
+                headerIcon.innerText = '🍔';
+            }
+
+            if (state.fryUnlocked) {
+                document.getElementById('swapTargetBtn').classList.remove('hidden');
+            }
+        }
+
+        /* ==========================================================================
+           8. TAB NAVIGATION & RENDER FUNCTIONS
+           ========================================================================== */
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('bg-burger-accent', 'text-white', 'shadow-md');
+                b.classList.add('text-gray-400');
+            });
+
+            const activePane = document.getElementById(`content-${tabName}`);
+            const activeTabBtn = document.getElementById(`tab-${tabName}`);
+
+            if (activePane) activePane.classList.remove('hidden');
+            if (activeTabBtn) {
+                activeTabBtn.classList.add('bg-burger-accent', 'text-white', 'shadow-md');
+                activeTabBtn.classList.remove('text-gray-400');
+            }
+        }
+
+        function renderUpgradesUI() {
+            // 1. Tongue Upgrades
+            const tonguesContainer = document.getElementById('tongueUpgradesList');
+            tonguesContainer.innerHTML = '';
+            TONGUE_UPGRADES.forEach(u => {
+                const count = state.tongues[u.id] || 0;
+                const cost = getItemCost(u.cost, count);
+                const canAfford = state.licks >= cost;
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                    canAfford ? 'bg-burger-card border-burger-border hover:border-burger-cheese' : 'bg-burger-bg/40 border-burger-border/40 opacity-60'
+                }`;
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl p-2 bg-burger-bg rounded-xl border border-burger-border">${u.icon}</span>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h4 class="font-extrabold text-sm text-white">${u.name}</h4>
+                                ${count > 0 ? `<span class="px-2 py-0.5 text-[10px] bg-burger-accent/20 text-burger-accent rounded-full font-bold">Lvl ${count}</span>` : ''}
+                            </div>
+                            <p class="text-xs text-gray-400 font-outfit mt-0.5">${u.desc}</p>
+                        </div>
+                    </div>
+                    <button onclick="buyTongue('${u.id}')" ${!canAfford ? 'disabled' : ''} class="px-4 py-2 rounded-xl font-bold text-xs transition-all flex flex-col items-center ${
+                        canAfford ? 'bg-burger-cheese text-gray-900 hover:bg-yellow-400 shadow-md' : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                    }">
+                        <span>BUY</span>
+                        <span class="text-[10px] font-mono">${formatNum(cost)}</span>
+                    </button>
+                `;
+                tonguesContainer.appendChild(card);
+            });
+
+            // 2. Automation Lickers
+            const lickersContainer = document.getElementById('lickersList');
+            lickersContainer.innerHTML = '';
+            AUTOMATION_LICKERS.forEach(l => {
+                const count = state.lickers[l.id] || 0;
+                const cost = getItemCost(l.cost, count);
+                const canAfford = state.licks >= cost;
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                    canAfford ? 'bg-burger-card border-burger-border hover:border-burger-cheese' : 'bg-burger-bg/40 border-burger-border/40 opacity-60'
+                }`;
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl p-2 bg-burger-bg rounded-xl border border-burger-border">${l.icon}</span>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h4 class="font-extrabold text-sm text-white">${l.name}</h4>
+                                ${count > 0 ? `<span class="px-2 py-0.5 text-[10px] bg-yellow-500/20 text-yellow-400 rounded-full font-bold">x${count}</span>` : ''}
+                            </div>
+                            <p class="text-xs text-gray-400 font-outfit mt-0.5">${l.desc}</p>
+                            <span class="text-[11px] text-burger-cheese font-bold">+${formatNum(l.baseLPS)} LPS each</span>
+                        </div>
+                    </div>
+                    <button onclick="buyLicker('${l.id}')" ${!canAfford ? 'disabled' : ''} class="px-4 py-2 rounded-xl font-bold text-xs transition-all flex flex-col items-center ${
+                        canAfford ? 'bg-burger-cheese text-gray-900 hover:bg-yellow-400 shadow-md' : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                    }">
+                        <span>BUY</span>
+                        <span class="text-[10px] font-mono">${formatNum(cost)}</span>
+                    </button>
+                `;
+                lickersContainer.appendChild(card);
+            });
+
+            // 3. Toppings & Boosters
+            const toppingsContainer = document.getElementById('toppingsList');
+            toppingsContainer.innerHTML = '';
+            TOPPING_BOOSTERS.forEach(b => {
+                const bought = !!state.toppings[b.id];
+                const canAfford = state.licks >= b.cost && !bought;
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                    bought ? 'bg-emerald-950/20 border-emerald-500/40' : (canAfford ? 'bg-burger-card border-burger-border hover:border-burger-cheese' : 'bg-burger-bg/40 border-burger-border/40 opacity-60')
+                }`;
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl p-2 bg-burger-bg rounded-xl border border-burger-border">${b.icon}</span>
+                        <div>
+                            <h4 class="font-extrabold text-sm text-white">${b.name}</h4>
+                            <p class="text-xs text-gray-400 font-outfit mt-0.5">${b.desc}</p>
+                        </div>
+                    </div>
+                    <button onclick="buyTopping('${b.id}')" ${bought || !canAfford ? 'disabled' : ''} class="px-4 py-2 rounded-xl font-bold text-xs transition-all ${
+                        bought ? 'bg-emerald-600/30 text-emerald-400 border border-emerald-500/40' : (canAfford ? 'bg-burger-cheese text-gray-900 hover:bg-yellow-400 shadow-md' : 'bg-gray-800 text-gray-500 cursor-not-allowed')
+                    }">
+                        ${bought ? 'UNLOCKED' : `BUY (${formatNum(b.cost)})`}
+                    </button>
+                `;
+                toppingsContainer.appendChild(card);
+            });
+
+            // 4. Ascension Perks Tree
+            const perksContainer = document.getElementById('ascensionPerksList');
+            perksContainer.innerHTML = '';
+            ASCENSION_PERKS.forEach(p => {
+                const bought = !!state.perks[p.id];
+                const canAfford = state.goldenSalt >= p.cost && !bought;
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                    bought ? 'bg-yellow-500/10 border-yellow-500/50' : (canAfford ? 'bg-burger-card border-yellow-500/30' : 'bg-burger-bg/40 border-burger-border/40 opacity-60')
+                }`;
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl p-2 bg-burger-bg rounded-xl border border-burger-border">${p.icon}</span>
+                        <div>
+                            <h4 class="font-extrabold text-sm text-yellow-300">${p.name}</h4>
+                            <p class="text-xs text-gray-400 font-outfit mt-0.5">${p.desc}</p>
+                        </div>
+                    </div>
+                    <button onclick="buyPerk('${p.id}')" ${bought || !canAfford ? 'disabled' : ''} class="px-4 py-2 rounded-xl font-bold text-xs transition-all ${
+                        bought ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' : (canAfford ? 'bg-yellow-400 text-gray-900 hover:bg-yellow-300 shadow-neon-gold' : 'bg-gray-800 text-gray-500 cursor-not-allowed')
+                    }">
+                        ${bought ? 'OWNED' : `UNLOCK (${p.cost} 🧂)`}
+                    </button>
+                `;
+                perksContainer.appendChild(card);
+            });
+
+            // 5. Achievements
+            const achievementsContainer = document.getElementById('achievementsList');
+            achievementsContainer.innerHTML = '';
+            ACHIEVEMENTS.forEach(a => {
+                const unlocked = state.unlockedAchievements.includes(a.id);
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl border flex items-center space-x-3 ${
+                    unlocked ? 'bg-burger-card border-burger-accent/50 text-white' : 'bg-burger-bg/40 border-burger-border/40 opacity-40 grayscale'
+                }`;
+                card.innerHTML = `
+                    <span class="text-2xl p-2 bg-burger-bg rounded-xl border border-burger-border">${a.icon}</span>
+                    <div>
+                        <h4 class="font-bold text-xs text-white">${a.name}</h4>
+                        <p class="text-[10px] text-gray-400 font-outfit mt-0.5">${a.desc}</p>
+                    </div>
+                `;
+                achievementsContainer.appendChild(card);
+            });
+        }
+
+        /* ==========================================================================
+           9. PURCHASING ACTIONS
+           ========================================================================== */
+        function buyTongue(id) {
+            const u = TONGUE_UPGRADES.find(x => x.id === id);
+            const count = state.tongues[id] || 0;
+            const cost = getItemCost(u.cost, count);
+
+            if (state.licks >= cost) {
+                state.licks -= cost;
+                state.tongues[id] = count + 1;
+                AudioSys.playBuy();
+                updateUI();
+                renderUpgradesUI();
+            }
+        }
+
+        function buyLicker(id) {
+            const l = AUTOMATION_LICKERS.find(x => x.id === id);
+            const count = state.lickers[id] || 0;
+            const cost = getItemCost(l.cost, count);
+
+            if (state.licks >= cost) {
+                state.licks -= cost;
+                state.lickers[id] = count + 1;
+                AudioSys.playBuy();
+                updateUI();
+                renderUpgradesUI();
+            }
+        }
+
+        function buyTopping(id) {
+            const b = TOPPING_BOOSTERS.find(x => x.id === id);
+            if (state.licks >= b.cost && !state.toppings[id]) {
+                state.licks -= b.cost;
+                state.toppings[id] = true;
+                AudioSys.playBuy();
+                updateUI();
+                renderUpgradesUI();
+            }
+        }
+
+        function buyPerk(id) {
+            const p = ASCENSION_PERKS.find(x => x.id === id);
+            if (state.goldenSalt >= p.cost && !state.perks[id]) {
+                state.goldenSalt -= p.cost;
+                state.perks[id] = true;
+                AudioSys.playBuy();
+                updateUI();
+                renderUpgradesUI();
+            }
+        }
+
+        /* ==========================================================================
+           10. ASCENSION SYSTEM ("The Fry Dimension")
+           ========================================================================== */
+        function performAscension() {
+            const reward = calculateAscensionReward();
+            if (reward < 1 && state.totalLicks < 1000000000) {
+                showToast("You need at least 1 Billion Licks to Ascend!");
+                return;
+            }
+
+            // Play epic audio effect
+            AudioSys.playAscend();
+
+            // Grant Prestige Currency
+            state.goldenSalt += reward;
+            state.ascensions++;
+            state.fryUnlocked = true;
+            state.targetMode = 'fry';
+
+            // Reset Base Progress
+            state.licks = 0;
+            state.tongues = {};
+            state.lickers = {};
+            state.toppings = {};
+
+            // Check Achievements & Graphics
+            checkAchievements();
+            updateTargetGraphics();
+            updateUI();
+            renderUpgradesUI();
+
+            showToast(`✨ ASCENDED! Gained +${reward} Golden Salt! Switched to Fry Mode!`);
+        }
+
+        /* ==========================================================================
+           11. ACHIEVEMENTS & NOTIFICATIONS
+           ========================================================================== */
+        function checkAchievements() {
+            ACHIEVEMENTS.forEach(a => {
+                if (!state.unlockedAchievements.includes(a.id)) {
+                    let unlock = false;
+                    if (a.reqLicks && state.totalLicks >= a.reqLicks) unlock = true;
+                    if (a.reqAscensions && state.ascensions >= a.reqAscensions) unlock = true;
+
+                    if (unlock) {
+                        state.unlockedAchievements.push(a.id);
+                        showToast(`🏆 Badge Unlocked: ${a.name}!`);
+                    }
+                }
+            });
+        }
+
+        function showToast(msg) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification bg-burger-card border border-burger-accent text-white px-4 py-3 rounded-2xl shadow-neon-pink text-xs font-extrabold flex items-center space-x-2';
+            toast.innerHTML = `<span>🍦</span><span>${msg}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast.parentElement) toast.parentElement.removeChild(toast);
+            }, 3000);
+        }
+
+        /* ==========================================================================
+           12. REAL-TIME UI SYNC & GAME LOOP
+           ========================================================================== */
+        function updateUI() {
+            const currentLPS = getLPS();
+            const currentClick = getClickPower();
+
+            document.getElementById('licksDisplay').innerText = formatNum(state.licks);
+            document.getElementById('lpsDisplay').innerText = formatNum(currentLPS);
+            document.getElementById('saltDisplay').innerText = `${state.goldenSalt} 🧂`;
+            document.getElementById('clickPowerDisplay').innerText = `+${formatNum(currentClick)} / Lick`;
+
+            // Stats tab updates
+            document.getElementById('statTotalLicks').innerText = formatNum(state.totalLicks);
+            document.getElementById('statAscensions').innerText = state.ascensions;
+            document.getElementById('statMaxLPS').innerText = formatNum(state.maxLPS);
+            document.getElementById('statClicks').innerText = formatNum(state.clicks);
+
+            // Ascension tab button state
+            const mainAscendBtn = document.getElementById('mainAscendBtn');
+            const rewardPreview = calculateAscensionReward();
+            document.getElementById('ascendBonusPreview').innerText = `Current Reward: +${rewardPreview} Golden Salt 🧂`;
+
+            const reqLicks = 1000000000;
+            const progressPct = Math.min(100, (state.licks / reqLicks) * 100).toFixed(1);
+            document.getElementById('ascendProgressText').innerText = `${formatNum(state.licks)} / 1.00 Billion (${progressPct}%)`;
+
+            if (state.licks >= reqLicks) {
+                mainAscendBtn.disabled = false;
+                mainAscendBtn.className = 'w-full py-4 px-6 rounded-2xl font-black text-lg transition-all duration-300 bg-yellow-400 text-gray-900 hover:bg-yellow-300 ascend-ready cursor-pointer uppercase tracking-wider shadow-neon-gold';
+            } else {
+                mainAscendBtn.disabled = true;
+                mainAscendBtn.className = 'w-full py-4 px-6 rounded-2xl font-black text-lg transition-all duration-300 bg-gray-800 text-gray-500 cursor-not-allowed uppercase tracking-wider shadow-lg';
+            }
+        }
+
+        // Main game tick (Runs 10 times per second for smooth updates)
+        setInterval(() => {
+            const now = Date.now();
+            const delta = (now - state.lastTime) / 1000;
+            state.lastTime = now;
+
+            const lps = getLPS();
+            if (lps > 0) {
+                const gained = lps * delta;
+                state.licks += gained;
+                state.totalLicks += gained;
+                checkAchievements();
+            }
+
+            updateUI();
+        }, 100);
+
+        // Periodically refresh Shop buttons affordability state (1 second)
+        setInterval(() => {
+            renderUpgradesUI();
+        }, 1000);
+
+        /* ==========================================================================
+           13. SAVE / LOAD / EXPORT / IMPORT SYSTEM
+           ========================================================================== */
+        const SAVE_KEY = 'CheeseburgerLicker_SaveData_v1';
+
+        function saveGame(manual = false) {
+            try {
+                localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+                if (manual) showToast('Game saved successfully!');
+            } catch (e) {
+                console.error('Save error', e);
+            }
+        }
+
+        function loadGame() {
+            try {
+                const raw = localStorage.getItem(SAVE_KEY);
+                if (raw) {
+                    const loaded = JSON.parse(raw);
+                    state = { ...state, ...loaded };
+                    
+                    // Offline Progress calculation
+                    const offlineSecs = (Date.now() - state.lastTime) / 1000;
+                    if (offlineSecs > 10) {
+                        const offlineLPS = getLPS();
+                        const offlineGained = offlineSecs * offlineLPS * 0.5; // 50% efficiency offline
+                        state.licks += offlineGained;
+                        state.totalLicks += offlineGained;
+                        setTimeout(() => {
+                            showToast(`Welcome back! Earned ${formatNum(offlineGained)} licks while offline!`);
+                        }, 500);
+                    }
+                }
+            } catch (e) {
+                console.error('Load error', e);
+            }
+            state.lastTime = Date.now();
+            updateTargetGraphics();
+            renderUpgradesUI();
+            updateUI();
+        }
+
+        // Auto-save every 15 seconds
+        setInterval(() => saveGame(false), 15000);
+
+        function exportSave() {
+            const str = btoa(JSON.stringify(state));
+            openModal('Export Save Code', 'Copy your save data string below:', str, false);
+        }
+
+        function importSavePrompt() {
+            openModal('Import Save Data', 'Paste your save string below:', '', true, () => {
+                const input = document.getElementById('modalInput').value.trim();
+                try {
+                    const parsed = JSON.parse(atob(input));
+                    if (parsed && typeof parsed.licks === 'number') {
+                        state = parsed;
+                        saveGame(false);
+                        loadGame();
+                        closeModal();
+                        showToast('Save imported successfully!');
+                    } else {
+                        showToast('Invalid save string!');
+                    }
+                } catch (e) {
+                    showToast('Failed to parse save code!');
+                }
+            });
+        }
+
+        function confirmReset() {
+            openModal('⚠️ WIPE SAVE DATA', 'Are you sure you want to completely erase all progress? This cannot be undone!', '', false, () => {
+                localStorage.removeItem(SAVE_KEY);
+                location.reload();
+            });
+        }
+
+        /* Modal Dialog Helpers */
+        function openModal(title, bodyText, inputValue = '', showInput = false, onConfirm = null) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalBody').innerText = bodyText;
+            const input = document.getElementById('modalInput');
+            const buttons = document.getElementById('modalButtons');
+
+            if (showInput || inputValue) {
+                input.classList.remove('hidden');
+                input.value = inputValue;
+            } else {
+                input.classList.add('hidden');
+            }
+
+            buttons.innerHTML = `
+                <button onclick="closeModal()" class="px-4 py-2 rounded-xl bg-burger-border text-gray-300 font-bold text-xs">Cancel</button>
+                ${onConfirm ? `<button id="modalConfirmBtn" class="px-4 py-2 rounded-xl bg-burger-accent text-white font-bold text-xs">Confirm</button>` : ''}
+            `;
+
+            if (onConfirm) {
+                document.getElementById('modalConfirmBtn').onclick = onConfirm;
+            }
+
+            document.getElementById('customModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.add('hidden');
+        }
+
+        /* Initialize Game on Load */
+        window.onload = () => {
+            loadGame();
+        };
+    </script>
+</body>
+</html>
